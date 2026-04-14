@@ -1,17 +1,22 @@
-import yfinance
+from massive import RESTClient
 import pandas_ta as pt
 import argparse
 import json
+import os
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
-def get_historical_data(firm, period = "1y"):
-    #yfinance is not Yahoo's official API, it just scrapes data from Yahoo's website. However, Yahoo blocks requests that look like they are not coming ffrom a web browser.
-    # Yahoo also has a rate limiter which will prevent our code from getting enough data
-    #Therefore, make sessions that look like actual web browser sessions requesting information.
-    import requests_cache
-    session = requests_cache.CachedSession('yfinance.cache')
-    session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    stock = yfinance.Ticker(firm, session=session)
-    information = stock.history(period)
+API_KEY = os.getenv("D7sOI2RyluFFXXRe2GuGhsalUl39CzJg") #using environment variable to increase security
+client = RESTClient(API_KEY)
+
+def get_historical_data(firm, unit = "years", value = "1"):
+    prd = {unit: value}
+    from_date = datetime.now() - relativedelta(**prd)
+    to_date = datetime.now()
+    aggs = client.get_aggs(firm, 1, "day", from_date, to_date)
+    information = pt.DataFrame([dict(x) for x in aggs])
+    information['timestamp'] =pt.to_datetime(information['timestamp'], unit = 'ms')
+    information.set_index('timestamp', implace=True)
     return information
 
 def calculate_indicators(firm, info, rsi=14, ema = 20, sma = 100): 
@@ -30,6 +35,7 @@ def calculate_indicators(firm, info, rsi=14, ema = 20, sma = 100):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--firm", type=str, help="Enter firm whose stock you are interested in", required=True)
+    parser.add_argument("--unit", type=str, help="Enter the unit of time you want to get the data for. e.g. if you want data from one year ago, enter \"years\", and enter 1 for --period")
     parser.add_argument("--period", type=str, help="Enter the period of time you want to get the data for. e.g. if you want data from the last year, enter 1yr. Feel free to leave this blank")
     parser.add_argument("--rsi", type=int, help="Enter the number of periods you want to use for RSI calculation. If you are not sure, industry standard is 14 periods. Feel free to leave this blank")
     parser.add_argument("--ema", type=int, help="Enter the number of periods you want to use for EMA calculation. Feel free to leave this blank")
@@ -38,6 +44,6 @@ if __name__ == "__main__":
     firm = args.firm
     
     # retrive information
-    info = get_historical_data(firm, args.period)
+    info = get_historical_data(firm, args.unit, args.period)
     # print data (this will be given to an LLM brain)
     print(calculate_indicators(firm, info, args.rsi, args.ema, args.sma))

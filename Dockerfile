@@ -32,4 +32,4 @@ RUN pip3 install massive-api-client pandas-ta requests-cache
 
 CMD ["openclaw"]
 
-# the command to run trader.py in the container: docker run -it --rm -v "$(pwd)/trader.py:/home/sandboxuser/app/trader.py" openclaw-sandbox python3 /home/sandboxuser/app/trader.py --firm AAPL
+# the command to run trader.py in the container: docker run -it --rm -v "$(pwd):/home/sandboxuser/app" openclaw-sandbox openclaw onboard

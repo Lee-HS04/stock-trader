@@ -62,9 +62,8 @@ def trade(firm, price, quantity, action):
     cursor.execute("INSERT INTO trade_history (firm, price, quantity, action, timestamp) VALUES (?,?,?,?,?)", (firm, price, quantity, action, timestamp))  
     db.commit()
     db.close()
-    file = open(account, "w")
-    json.dump(portfolio, file)
-    file.close()
+    with open(account, "w") as file:
+        json.dump(portfolio, file)  
     print(f"Success: {action} {quantity} {firm} stocks at {price} per share. Balance: {portfolio['balance']}")
     return 
 

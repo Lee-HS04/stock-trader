@@ -1,0 +1,3 @@
+massive-api-client
+pandas-ta
+python-dateutil
